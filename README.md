@@ -1,5 +1,10 @@
 ## ⚡ VibeMatch
 
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-ammdevl-181717?logo=github)](https://github.com/ammdevl)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![GitHub issues](https://img.shields.io/github/issues/ammdevl/vibe-match.svg)](https://github.com/ammdevl/vibe-match/issues)
+
 Find the right MCPs, skills, and agents for your project idea.
 
 Describe what you want to build → VibeMatch uses AI to analyze your idea and searches the npm registry for the most relevant, popular tools — with direct links to install or learn more.
@@ -26,9 +31,10 @@ Describe what you want to build → VibeMatch uses AI to analyze your idea and s
 ## Tech stack
 
 - **Frontend:** Vanilla HTML/CSS/JS — no framework, fast, responsive
-- **Backend:** Node.js + Express
+- **Backend:** Node.js + Express (local dev) / Vercel Serverless Functions (production)
 - **AI:** mimo-v2.5 via Vibe Proxy (OpenAI-compatible API)
 - **Search:** npm registry API (free, no key needed)
+- **Deployment:** Vercel (auto-deploy from GitHub)
 - **Styling:** CSS custom properties, dark mode, mobile-first
 
 ## Quick start
@@ -62,7 +68,10 @@ vibe-match/
 ├── index.html              # Responsive frontend
 ├── style.css               # Dark/light mode, mobile-first
 ├── script.js               # Frontend logic
-├── server.js               # Express backend (AI + npm search)
+├── api/
+│   └── search.js           # Vercel serverless function (AI + npm search)
+├── server.js               # Express backend (local dev only)
+├── vercel.json             # Vercel deployment config
 ├── package.json            # Dependencies (express, cors)
 ├── .mcp.json               # MCP configuration
 ├── .claude/
@@ -73,6 +82,7 @@ vibe-match/
 ├── slides/
 │   └── pitch.md            # 6-slide Marp presentation
 ├── spec.md                 # Project specification
+├── report.md               # Project report
 └── README.md               # This file
 ```
 
