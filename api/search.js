@@ -125,7 +125,7 @@ module.exports = async function handler(req, res) {
   if (!query) return res.status(400).json({ error: "Missing query parameter ?q=" });
 
   if (!VIBE_PROXY || !VIBE_KEY) {
-    return res.status(500).json({ error: "VIBE_PROXY and VIBE_KEY not set." });
+    return res.status(500).json({ error: "Server misconfigured: VIBE_PROXY and VIBE_KEY environment variables not set in Vercel." });
   }
 
   const cached = getCached(query);
@@ -167,6 +167,6 @@ module.exports = async function handler(req, res) {
     return res.json(result);
   } catch (err) {
     console.error("Search error:", err.message);
-    return res.status(500).json({ error: "Search failed. Please try again." });
+    return res.status(500).json({ error: err.message });
   }
 };
