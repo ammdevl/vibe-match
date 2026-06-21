@@ -41,6 +41,9 @@ body {
   max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* --- Header --- */
@@ -276,7 +279,7 @@ body {
   color: var(--text-dim);
   font-size: 0.85rem;
   border-top: 1px solid var(--border);
-  margin-top: 2rem;
+  margin-top: auto;
 }
 
 .footer a {

@@ -101,14 +101,18 @@ form.addEventListener("submit", async (e) => {
   reasoning.hidden = true;
 
   try {
-    const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`);
+    const url = `${API_BASE}/api/search?q=${encodeURIComponent(query)}`;
+    console.log("Fetching:", url);
+    const res = await fetch(url);
+    console.log("Response status:", res.status);
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: "Request failed" }));
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
       throw new Error(err.error || `HTTP ${res.status}`);
     }
     const data = await res.json();
     showResults(data);
   } catch (err) {
+    console.error("Search error:", err);
     results.hidden = false;
     emptyState.hidden = false;
     emptyState.innerHTML = `<p>❌ ${escapeHtml(err.message)}</p>`;
