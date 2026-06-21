@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/search.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/search.js" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}

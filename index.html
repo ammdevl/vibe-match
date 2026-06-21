@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeMatch — Find the right MCPs, skills & agents for your project</title>
+  <meta name="description" content="Describe your project idea and get matched with the best MCPs, Claude skills, and AI agents.">
+  <meta property="og:title" content="VibeMatch">
+  <meta property="og:description" content="Describe your project idea and get matched with the best MCPs, skills & agents.">
+  <meta property="og:url" content="https://vibe-match-nine.vercel.app/">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="logo">⚡ VibeMatch</h1>
+      <p class="tagline">Describe your project. Get the right MCPs, skills & agents.</p>
+    </header>
+
+    <!-- Search -->
+    <form class="search-form" id="searchForm">
+      <div class="search-box">
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="e.g. Build a CLI that reads GitHub issues and posts summaries to Slack"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="search-btn" id="searchBtn">
+          <span class="btn-text">Find Tools</span>
+          <span class="btn-loading" hidden>
+            <span class="spinner"></span> Analyzing...
+          </span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Results -->
+    <main id="results" class="results" hidden>
+      <!-- Claude's reasoning -->
+      <section id="reasoning" class="reasoning" hidden>
+        <h2>🧠 What your project needs</h2>
+        <div id="reasoningContent"></div>
+      </section>
+
+      <!-- MCPs -->
+      <section id="mcpSection" class="result-section" hidden>
+        <h2>🔌 MCPs <span class="count" id="mcpCount"></span></h2>
+        <p class="section-desc" id="mcpReason"></p>
+        <div class="cards" id="mcpCards"></div>
+      </section>
+
+      <!-- Skills -->
+      <section id="skillSection" class="result-section" hidden>
+        <h2>🛠 Skills <span class="count" id="skillCount"></span></h2>
+        <p class="section-desc" id="skillReason"></p>
+        <div class="cards" id="skillCards"></div>
+      </section>
+
+      <!-- Agents -->
+      <section id="agentSection" class="result-section" hidden>
+        <h2>🤖 Agents <span class="count" id="agentCount"></span></h2>
+        <p class="section-desc" id="agentReason"></p>
+        <div class="cards" id="agentCards"></div>
+      </section>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="empty-state" hidden>
+        <p>😕 No matches found. Try different or broader keywords.</p>
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <p>Built with ⚡ VibeMatch · <a href="https://github.com/ammdevl/ai-vibe-code-tour" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
