@@ -78,24 +78,19 @@ Keep queries 2-4 words. Focus on what the project actually needs.`;
   throw new Error("AI returned incomplete JSON");
 }
 
-// --- Fetch GitHub stars for a repo ---
-async function getGitHubStars(fullName) {
+// --- Fetch weekly downloads for a package ---
+async function getWeeklyDownloads(pkgName) {
   try {
-    const res = await fetch(`https://api.github.com/repos/${fullName}`, {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "VibeMatch/1.0",
-      },
-    });
-    if (!res.ok) return null;
+    const res = await fetch(`https://api.npmjs.org/downloads/point/last-week/${encodeURIComponent(pkgName)}`);
+    if (!res.ok) return 0;
     const data = await res.json();
-    return data.stargazers_count || 0;
+    return data.downloads || 0;
   } catch {
-    return null;
+    return 0;
   }
 }
 
-// --- npm registry search + GitHub stars ---
+// --- npm registry search + weekly downloads ---
 async function searchNpm(query, topic) {
   const searchQuery = `${query} ${topic}`;
   const url = `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(searchQuery)}&size=10&popularity=1.0&quality=0.0`;
@@ -118,26 +113,19 @@ async function searchNpm(query, topic) {
         full_name: fullName || `npm/${pkg.name}`,
         description: pkg.description || "",
         url: fullName ? `https://github.com/${fullName}` : `https://www.npmjs.com/package/${pkg.name}`,
-        stars: null, // will be filled from GitHub API
-        popularity: Math.round((obj.score?.detail?.popularity || 0) * 100),
+        stars: 0,
+        weeklyDownloads: 0,
         topics: [topic],
         updated_at: pkg.date || "",
         owner: fullName ? fullName.split("/")[0] : "npm",
       };
     });
 
-    // Fetch GitHub stars in parallel for repos that have a GitHub URL
-    const starPromises = results.map((r) =>
-      r.stars === null && r.url.includes("github.com")
-        ? getGitHubStars(r.full_name).then((s) => { r.stars = s; })
-        : Promise.resolve()
+    // Fetch weekly downloads in parallel
+    const dlPromises = results.map((r) =>
+      getWeeklyDownloads(r.name).then((dl) => { r.weeklyDownloads = dl; })
     );
-    await Promise.all(starPromises);
-
-    // Fill in fallback for repos without GitHub stars
-    for (const r of results) {
-      if (r.stars === null) r.stars = 0;
-    }
+    await Promise.all(dlPromises);
 
     return results;
   } catch {

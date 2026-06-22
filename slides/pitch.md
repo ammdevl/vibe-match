@@ -9,7 +9,7 @@ auto-advance: 20
 # ⚡ VibeMatch
 **Find the right MCPs, skills & agents for any project**
 
-Describe your idea → get curated tool recommendations from GitHub
+Describe your idea → get curated tool recommendations from npm
 
 ---
 
@@ -25,15 +25,15 @@ Developers waste hours searching for AI tools across:
 <!-- slide 3 -->
 # What I Built
 A responsive web app powered by:
-- **Claude API** — analyzes your project idea, identifies needed capabilities
-- **GitHub Search API** — finds real repos ranked by popularity
-- **Vanilla JS + Express** — fast, no framework overhead
+- **mimo-v2.5 AI** — analyzes your project idea, identifies needed capabilities
+- **npm Registry API** — finds real packages ranked by weekly downloads
+- **Vanilla JS + Vercel** — fast, no framework overhead
 
 ---
 
 <!-- slide 4 -->
 # How I Built It
-- **MCP**: GitHub MCP + Brave Search MCP for repo discovery
+- **MCP**: fetch MCP server for web requests
 - **Skill**: vibe-search — teaches Claude how to query for tools
 - **Agent**: vibe-match agent — orchestrates analysis → search → ranking
 
@@ -42,17 +42,17 @@ A responsive web app powered by:
 <!-- slide 5 -->
 # Why It Matters
 - **Minutes, not hours** — describe your project, get tools instantly
-- **Real results** — live GitHub data, ranked by stars
-- **AI-powered** — Claude understands intent, not just keywords
-- **Open source** — anyone can use and improve it
+- **Real results** — live npm data, ranked by downloads
+- **AI-powered** — understands intent, not just keywords
+- **Free & open source** — anyone can use and improve it
 
 ---
 
 <!-- slide 6 -->
 # Done Checklist
 - [x] Responsive UI (mobile + desktop)
-- [x] Claude API analyzes project ideas
-- [x] GitHub Search returns real MCPs, skills, agents
-- [x] Results ranked by popularity
+- [x] AI analyzes project ideas
+- [x] npm Search returns real MCPs, skills, agents
+- [x] Results ranked by weekly downloads
 - [x] .mcp.json + skill + agent in repo
 - [x] 6-slide Marp presentation
