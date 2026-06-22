@@ -78,7 +78,24 @@ Keep queries 2-4 words. Focus on what the project actually needs.`;
   throw new Error("AI returned incomplete JSON");
 }
 
-// --- npm registry search ---
+// --- Fetch GitHub stars for a repo ---
+async function getGitHubStars(fullName) {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${fullName}`, {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "VibeMatch/1.0",
+      },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.stargazers_count || 0;
+  } catch {
+    return null;
+  }
+}
+
+// --- npm registry search + GitHub stars ---
 async function searchNpm(query, topic) {
   const searchQuery = `${query} ${topic}`;
   const url = `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(searchQuery)}&size=10&popularity=1.0&quality=0.0`;
@@ -88,23 +105,41 @@ async function searchNpm(query, topic) {
     if (!res.ok) return [];
 
     const data = await res.json();
-    return (data.objects || []).map((obj) => {
+
+    // Build initial results from npm
+    const results = (data.objects || []).map((obj) => {
       const pkg = obj.package;
       const repoUrl = pkg.links?.repository || pkg.links?.homepage || "";
       const ghMatch = repoUrl.match(/github\.com\/([\w.-]+\/[\w.-]+)/);
-      const fullName = ghMatch ? ghMatch[1] : `npm/${pkg.name}`;
+      const fullName = ghMatch ? ghMatch[1] : null;
 
       return {
         name: pkg.name,
-        full_name: fullName,
+        full_name: fullName || `npm/${pkg.name}`,
         description: pkg.description || "",
-        url: ghMatch ? `https://github.com/${fullName}` : `https://www.npmjs.com/package/${pkg.name}`,
-        stars: Math.round((obj.score?.detail?.popularity || 0) * 1000),
+        url: fullName ? `https://github.com/${fullName}` : `https://www.npmjs.com/package/${pkg.name}`,
+        stars: null, // will be filled from GitHub API
+        popularity: Math.round((obj.score?.detail?.popularity || 0) * 100),
         topics: [topic],
         updated_at: pkg.date || "",
-        owner: fullName.split("/")[0],
+        owner: fullName ? fullName.split("/")[0] : "npm",
       };
     });
+
+    // Fetch GitHub stars in parallel for repos that have a GitHub URL
+    const starPromises = results.map((r) =>
+      r.stars === null && r.url.includes("github.com")
+        ? getGitHubStars(r.full_name).then((s) => { r.stars = s; })
+        : Promise.resolve()
+    );
+    await Promise.all(starPromises);
+
+    // Fill in fallback for repos without GitHub stars
+    for (const r of results) {
+      if (r.stars === null) r.stars = 0;
+    }
+
+    return results;
   } catch {
     return [];
   }

@@ -18,8 +18,16 @@ const sections = [
   { id: "agent", key: "agents", cards: "agentCards", section: "agentSection", count: "agentCount", reason: "agentReason" },
 ];
 
+function formatStars(n) {
+  if (n === null || n === undefined) return "—";
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`;
+  return n.toString();
+}
+
 function createCard(item, type) {
-  const stars = item.stars >= 1000 ? `${(item.stars / 1000).toFixed(1)}k` : item.stars;
+  const stars = formatStars(item.stars);
+  const linkText = item.url.includes("npmjs.com") ? "View on npm →" : "View on GitHub →";
   return `
     <div class="card">
       <div class="card-header">
@@ -29,7 +37,7 @@ function createCard(item, type) {
       <p class="card-desc">${escapeHtml(item.description || "No description")}</p>
       <div class="card-footer">
         <span class="type-badge ${type}">${type.toUpperCase()}</span>
-        <a href="${item.url}" target="_blank" rel="noopener" class="card-link">View on GitHub →</a>
+        <a href="${item.url}" target="_blank" rel="noopener" class="card-link">${linkText}</a>
       </div>
     </div>
   `;
