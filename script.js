@@ -18,21 +18,21 @@ const sections = [
   { id: "agent", key: "agents", cards: "agentCards", section: "agentSection", count: "agentCount", reason: "agentReason" },
 ];
 
-function formatDownloads(n) {
-  if (!n || n === 0) return "—";
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M/week`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K/week`;
-  return `${n}/week`;
+function formatStars(n) {
+  if (n === null || n === undefined) return "—";
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`;
+  return n.toString();
 }
 
 function createCard(item, type) {
-  const downloads = formatDownloads(item.weeklyDownloads);
+  const stars = formatStars(item.stars);
   const linkText = item.url.includes("npmjs.com") ? "View on npm →" : "View on GitHub →";
   return `
     <div class="card">
       <div class="card-header">
         <span class="card-name">${escapeHtml(item.full_name)}</span>
-        <span class="card-stars">📥 ${downloads}</span>
+        <span class="card-stars">⭐ ${stars}</span>
       </div>
       <p class="card-desc">${escapeHtml(item.description || "No description")}</p>
       <div class="card-footer">
