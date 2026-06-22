@@ -26,7 +26,7 @@ Developers waste hours searching for AI tools across:
 # What I Built
 A responsive web app powered by:
 - **mimo-v2.5 AI** — analyzes your project idea, identifies needed capabilities
-- **npm Registry API** — finds real packages ranked by weekly downloads
+- **npm Registry API** — finds real packages ranked by GitHub stars
 - **Vanilla JS + Vercel** — fast, no framework overhead
 
 ---
@@ -34,15 +34,15 @@ A responsive web app powered by:
 <!-- slide 4 -->
 # How I Built It
 - **MCP**: fetch MCP server for web requests
-- **Skill**: vibe-search — teaches Claude how to query for tools
 - **Agent**: vibe-match agent — orchestrates analysis → search → ranking
+- **Backend**: Vercel serverless + GitHub stars with 1hr cache
 
 ---
 
 <!-- slide 5 -->
 # Why It Matters
 - **Minutes, not hours** — describe your project, get tools instantly
-- **Real results** — live npm data, ranked by downloads
+- **Real results** — live npm data, ranked by GitHub stars
 - **AI-powered** — understands intent, not just keywords
 - **Free & open source** — anyone can use and improve it
 
@@ -53,6 +53,6 @@ A responsive web app powered by:
 - [x] Responsive UI (mobile + desktop)
 - [x] AI analyzes project ideas
 - [x] npm Search returns real MCPs, skills, agents
-- [x] Results ranked by weekly downloads
-- [x] .mcp.json + skill + agent in repo
+- [x] Results ranked by GitHub stars (cached 1hr)
+- [x] .mcp.json + agent in repo
 - [x] 6-slide Marp presentation

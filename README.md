@@ -2,14 +2,14 @@
 
 Find the right MCPs, skills, and agents for your project idea.
 
-Describe what you want to build → VibeMatch uses AI to analyze your idea and searches the npm registry for the most relevant, popular tools — with weekly download counts and direct links.
+Describe what you want to build → VibeMatch uses AI to analyze your idea and searches the npm registry for the most relevant, popular tools — ranked by GitHub stars with direct links.
 
 ## How it works
 
 1. **Type your project idea** — e.g. "a dashboard that tracks GitHub issues and sends Slack alerts"
 2. **AI analyzes it** — identifies what capabilities you need (GitHub API, Slack integration, etc.)
 3. **Searches npm** — finds real MCPs, skills, and agents matching those capabilities
-4. **Get results** — ranked by weekly downloads, grouped by type, with install links
+4. **Get results** — ranked by GitHub stars, grouped by type, with install links
 
 ## Tech stack
 
@@ -17,7 +17,7 @@ Describe what you want to build → VibeMatch uses AI to analyze your idea and s
 - **Backend:** Vercel serverless functions (production) / Node.js + Express (local dev)
 - **AI:** mimo-v2.5 via Vibe Proxy (OpenAI-compatible API)
 - **Search:** npm registry API (free, no key needed)
-- **Popularity:** npm weekly download counts
+- **Popularity:** GitHub stars (production) / npm popularity score (local dev)
 - **Styling:** CSS custom properties, dark mode, mobile-first
 
 ## Quick start
@@ -59,8 +59,6 @@ vibe-match/
 ├── .mcp.json               # MCP configuration
 ├── .claude/
 │   ├── settings.local.json # MCP server settings
-│   ├── skills/vibe-search/
-│   │   └── SKILL.md        # Skill: how to search for tools
 │   └── agents/
 │       └── vibe-match.md   # Agent: discovery orchestrator
 ├── slides/
@@ -75,7 +73,7 @@ vibe-match/
 - **AI-powered analysis** — understands natural language project descriptions
 - **Real results** — searches npm for actual packages, not a static list
 - **Three tool types** — MCPs, Claude Code skills, and AI agents
-- **Ranked by popularity** — shows weekly download counts (1.2K/week, 350K/week, etc.)
+- **Ranked by popularity** — shows GitHub star counts with 1-hour caching
 - **Responsive** — works on mobile, tablet, and desktop
 - **Dark mode** — respects system preference
 - **Fast** — rate-limited to 10 req/min per IP

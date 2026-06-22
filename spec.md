@@ -1,16 +1,16 @@
 # VibeMatch — Spec
 
 ## Gist
-A responsive web app where developers describe their project idea in natural language, AI analyzes what tools they need, and npm registry search delivers the most popular matching MCPs, skills, and agents — with direct links and weekly download counts.
+A responsive web app where developers describe their project idea in natural language, AI analyzes what tools they need, and npm registry search delivers the most popular matching MCPs, skills, and agents — ranked by GitHub stars with direct links.
 
 ## Story
-A developer sits down to start a new AI-powered project. They have an idea — say, "build a dashboard that pulls GitHub issues and posts summaries to Slack" — but they don't know which MCPs, skills, or agents exist to accelerate their workflow. Instead of digging through GitHub repos, Discord threads, and scattered documentation, they open VibeMatch, type their idea, and AI breaks it down: "You need a GitHub MCP for API access, a Slack MCP for posting messages, and a summarization agent." The app searches npm for each tool type, ranks results by weekly downloads, and presents the best matches. The developer picks what fits, installs it, and starts building in minutes instead of hours.
+A developer sits down to start a new AI-powered project. They have an idea — say, "build a dashboard that pulls GitHub issues and posts summaries to Slack" — but they don't know which MCPs, skills, or agents exist to accelerate their workflow. Instead of digging through GitHub repos, Discord threads, and scattered documentation, they open VibeMatch, type their idea, and AI breaks it down: "You need a GitHub MCP for API access, a Slack MCP for posting messages, and a summarization agent." The app searches npm for each tool type, ranks results by GitHub stars, and presents the best matches. The developer picks what fits, installs it, and starts building in minutes instead of hours.
 
 ## Why
 The AI developer tooling ecosystem is exploding — MCPs, skills, agents, plugins — but discovery is broken. Developers waste time searching across fragmented sources, often missing the perfect tool that already exists. VibeMatch closes the discovery gap: describe what you want, get what you need. This removes the friction of "what tools should I use?" and lets developers focus on building.
 
 ## Why Not
-- **No tool reviews or ratings.** We recommend based on relevance and popularity (weekly downloads), not editorial opinions.
+- **No tool reviews or ratings.** We recommend based on relevance and popularity (GitHub stars), not editorial opinions.
 - **No tool creation or hosting.** VibeMatch is a discovery layer, not a registry or package manager.
 - **No user accounts or saved preferences.** Stateless — type, get results, leave.
 - **No static dataset.** All results come live from npm registry API.
@@ -34,9 +34,11 @@ The AI developer tooling ecosystem is exploding — MCPs, skills, agents, plugin
    - MCP queries → npm packages matching `mcp`
    - Skill queries → npm packages matching `skill`
    - Agent queries → npm packages matching `agent`
-   Each result: `name`, `full_name`, `description`, `url`, `weeklyDownloads`, `topics[]`, `updated_at`. Sorted by weekly downloads.
+   Each result: `name`, `full_name`, `description`, `url`, `stars`, `topics[]`, `updated_at`.
+   For each package with a GitHub repo, fetches star count from `api.github.com` (3s timeout, 1hr cache).
+   Sorted by GitHub stars (production) or npm popularity score (local dev).
 
-4. **Results Display (Frontend)** — Card-based layout showing matched tools. Each card: package name, type badge (MCP / Skill / Agent), description, weekly download count, link to GitHub or npm. Cards grouped by type with AI's reasoning as section headers. Empty state for no matches.
+4. **Results Display (Frontend)** — Card-based layout showing matched tools. Each card: package name, type badge (MCP / Skill / Agent), description, GitHub star count, link to GitHub or npm. Cards grouped by type with AI's reasoning as section headers. Empty state for no matches.
 
 **Data Flow:**
 ```
@@ -48,9 +50,9 @@ AI returns: { capabilities, mcp_queries, skill_queries, agent_queries, reasoning
         ↓
 Backend → npm registry API × 3 (parallel, using AI's search terms)
         ↓
-For each package → fetch weekly downloads from npm API
+For each package → fetch GitHub stars from api.github.com (3s timeout, 1hr cache)
         ↓
-Results ranked by downloads, grouped by type
+Results ranked by stars, grouped by type, capped at 10 per type
         ↓
 Frontend displays results with AI's reasoning as context
 ```
@@ -60,18 +62,18 @@ Frontend displays results with AI's reasoning as context
 **Deployment:** Frontend (`index.html`, `style.css`, `script.js`) served as static files. Backend (`api/search.js`) as Vercel serverless function. Requires 2 env vars: `VIBE_PROXY` + `VIBE_KEY`. Only 2 npm deps (express, cors) for local dev.
 
 ## Definition of Done
-- [ ] User can type a project description and see relevant MCPs, skills, and agents
-- [ ] AI correctly identifies required capabilities from natural language
-- [ ] AI generates targeted npm search queries for each tool type
-- [ ] Three parallel npm registry searches return real packages
-- [ ] Results include package name, type badge, description, weekly downloads, and working link
-- [ ] Results are sorted by popularity (weekly downloads) within each type
-- [ ] AI's reasoning is shown to the user (why each tool type is relevant)
-- [ ] Empty state displays helpful message when no matches found
-- [ ] Loading state shows spinner while results are being fetched
-- [ ] Responsive layout works on mobile (480px), tablet (768px), and desktop (1024px+)
-- [ ] Dark mode respects system preference
-- [ ] All result links point to real GitHub repos or npm packages
-- [ ] Rate limiting prevents API abuse (10 req/min per IP)
-- [ ] Uses existing Vibe proxy (VIBE_PROXY + VIBE_KEY) — no new API key needed
-- [ ] No JavaScript framework dependencies — vanilla JS only
+- [x] User can type a project description and see relevant MCPs, skills, and agents
+- [x] AI correctly identifies required capabilities from natural language
+- [x] AI generates targeted npm search queries for each tool type
+- [x] Three parallel npm registry searches return real packages
+- [x] Results include package name, type badge, description, GitHub stars, and working link
+- [x] Results are sorted by popularity (GitHub stars) within each type
+- [x] AI's reasoning is shown to the user (why each tool type is relevant)
+- [x] Empty state displays helpful message when no matches found
+- [x] Loading state shows spinner while results are being fetched
+- [x] Responsive layout works on mobile (480px), tablet (768px), and desktop (1024px+)
+- [x] Dark mode respects system preference
+- [x] All result links point to real GitHub repos or npm packages
+- [x] Rate limiting prevents API abuse (10 req/min per IP)
+- [x] Uses existing Vibe proxy (VIBE_PROXY + VIBE_KEY) — no new API key needed
+- [x] No JavaScript framework dependencies — vanilla JS only
