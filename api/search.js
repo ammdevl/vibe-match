@@ -1,12 +1,23 @@
 // Vercel serverless function — /api/search
 const VIBE_PROXY = process.env.VIBE_PROXY || "";
 const VIBE_KEY = process.env.VIBE_KEY || "";
+const MAX_QUERY_LENGTH = 500;
+
+// --- Sanitize user input: strip control chars, quotes, truncate ---
+function sanitizeQuery(raw) {
+  return raw
+    .replace(/[\x00-\x1f\x7f]/g, "")
+    .replace(/["\\]/g, "")
+    .slice(0, MAX_QUERY_LENGTH)
+    .trim();
+}
 
 // --- Caches ---
 const searchCache = new Map();
 const starCache = new Map();
 const SEARCH_CACHE_TTL = 5 * 60 * 1000;   // 5 min
 const STAR_CACHE_TTL = 60 * 60 * 1000;     // 1 hour
+const MAX_CACHE_SIZE = 200;
 
 function getCached(map, key, ttl) {
   const entry = map.get(key);
@@ -16,6 +27,10 @@ function getCached(map, key, ttl) {
 }
 
 function setCache(map, key, data) {
+  if (map.size >= MAX_CACHE_SIZE) {
+    const oldest = map.keys().next().value;
+    map.delete(oldest);
+  }
   map.set(key, { data, ts: Date.now() });
 }
 
@@ -23,9 +38,13 @@ function setCache(map, key, data) {
 async function askAI(projectIdea) {
   const system = `You are a JSON API. You MUST respond with ONLY a valid JSON object. No markdown. No code fences. No explanation. Just the raw JSON object.`;
 
+  // User input inside <project> tags to prevent prompt injection.
+  // Quotes and backslashes already stripped by sanitizeQuery().
   const user = `Given this project idea, find the MCPs, skills, and agents needed.
 
-Project: "${projectIdea}"
+<project>
+${projectIdea}
+</project>
 
 Respond with this exact JSON structure and nothing else:
 {"capabilities":["cap1","cap2"],"mcp_queries":["query1"],"skill_queries":["query1"],"agent_queries":["query1"],"reasoning":{"mcp":"why mcp helps","skill":"why skill helps","agent":"why agent helps"}}
@@ -163,8 +182,30 @@ function formatStars(n) {
   return n;
 }
 
+// --- Simple in-memory rate limiter for Vercel serverless ---
+const RATE_WINDOW = 60 * 1000;
+const RATE_MAX = 10;
+const rateMap = new Map();
+
+function checkRate(ip) {
+  const now = Date.now();
+  const entry = rateMap.get(ip);
+  if (!entry || now - entry.start > RATE_WINDOW) {
+    rateMap.set(ip, { count: 1, start: now });
+    if (rateMap.size > 1000) { const k = rateMap.keys().next().value; rateMap.delete(k); }
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_MAX;
+}
+
 // --- Vercel serverless handler ---
 module.exports = async function handler(req, res) {
+  // Security headers
+  res.setHeader("Content-Security-Policy", "default-src 'none'");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
   // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -174,11 +215,17 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const query = (req.query.q || "").trim();
+  // Rate limit by IP
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket?.remoteAddress || "unknown";
+  if (!checkRate(ip)) {
+    return res.status(429).json({ error: "Too many requests. Please wait." });
+  }
+
+  const query = sanitizeQuery(req.query.q || "");
   if (!query) return res.status(400).json({ error: "Missing query parameter ?q=" });
 
   if (!VIBE_PROXY || !VIBE_KEY) {
-    return res.status(500).json({ error: "Server misconfigured: VIBE_PROXY and VIBE_KEY environment variables not set in Vercel." });
+    return res.status(500).json({ error: "Server misconfigured." });
   }
 
   const cached = getCached(searchCache, query, SEARCH_CACHE_TTL);
@@ -220,6 +267,6 @@ module.exports = async function handler(req, res) {
     return res.json(result);
   } catch (err) {
     console.error("Search error:", err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: "Search failed. Please try again." });
   }
 };

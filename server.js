@@ -1,19 +1,51 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MAX_QUERY_LENGTH = 500;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("."));
+
+// Only serve whitelisted static files — NEVER .env, node_modules, or server code
+const ALLOWED_STATIC = /\.(html|css|js|png|svg|ico|webp|jpg)$/i;
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) return next(); // passthrough API routes
+  if (req.method === "GET" && req.path !== "/" && !ALLOWED_STATIC.test(req.path)) {
+    return res.status(404).json({ error: "Not found" });
+  }
+  next();
+});
+app.use(express.static(".", {
+  index: "index.html",
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".html")) {
+      res.setHeader("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; img-src 'self' data:;");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("X-Frame-Options", "DENY");
+      res.setHeader("Referrer-Policy", "no-referrer");
+    }
+  },
+}));
 
 const VIBE_PROXY = process.env.VIBE_PROXY || "";
 const VIBE_KEY = process.env.VIBE_KEY || "";
 
-// --- In-memory cache (5 min TTL) ---
+// --- Sanitize user input: strip control chars, truncate ---
+function sanitizeQuery(raw) {
+  return raw
+    .replace(/[\x00-\x1f\x7f]/g, "") // strip control characters
+    .replace(/["\\]/g, "")            // strip quotes and backslashes (prompt injection defense)
+    .slice(0, MAX_QUERY_LENGTH)
+    .trim();
+}
+
+// --- In-memory cache (5 min TTL, max 200 entries) ---
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
+const MAX_CACHE_SIZE = 200;
 
 function getCached(key) {
   const entry = cache.get(key);
@@ -23,6 +55,11 @@ function getCached(key) {
 }
 
 function setCache(key, data) {
+  if (cache.size >= MAX_CACHE_SIZE) {
+    // Evict oldest entry
+    const oldest = cache.keys().next().value;
+    cache.delete(oldest);
+  }
   cache.set(key, { data, ts: Date.now() });
 }
 
@@ -48,9 +85,13 @@ function checkRate(ip) {
 async function askAI(projectIdea) {
   const system = `You are a JSON API. You MUST respond with ONLY a valid JSON object. No markdown. No code fences. No explanation. Just the raw JSON object.`;
 
+  // User input placed inside <project> tags to prevent prompt injection.
+  // No quotes, backslashes, or control characters survive sanitizeQuery().
   const user = `Given this project idea, find the MCPs, skills, and agents needed.
 
-Project: "${projectIdea}"
+<project>
+${projectIdea}
+</project>
 
 Respond with this exact JSON structure and nothing else:
 {"capabilities":["cap1","cap2"],"mcp_queries":["query1"],"skill_queries":["query1"],"agent_queries":["query1"],"reasoning":{"mcp":"why mcp helps","skill":"why skill helps","agent":"why agent helps"}}
@@ -175,8 +216,9 @@ app.get("/api/search", async (req, res) => {
     return res.status(429).json({ error: "Rate limit exceeded. Try again in a minute." });
   }
 
-  const query = (req.query.q || "").trim();
+  const query = sanitizeQuery(req.query.q || "");
   if (!query) return res.status(400).json({ error: "Missing query parameter ?q=" });
+  if (query.length > MAX_QUERY_LENGTH) return res.status(400).json({ error: "Query too long" });
 
   if (!VIBE_PROXY || !VIBE_KEY) {
     return res.status(500).json({ error: "VIBE_PROXY and VIBE_KEY not set on server." });

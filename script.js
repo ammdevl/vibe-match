@@ -1,4 +1,33 @@
 // VibeMatch — Frontend
+
+// --- Theme Toggle ---
+(function () {
+  const root = document.documentElement;
+  const toggle = document.getElementById("themeToggle");
+  if (!toggle) return;
+
+  const saved = localStorage.getItem("vibe-theme");
+  const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+
+  // Apply initial theme
+  if (saved === "light" || (!saved && prefersLight)) {
+    root.setAttribute("data-theme", "light");
+  } else {
+    root.removeAttribute("data-theme");
+  }
+
+  toggle.addEventListener("click", () => {
+    const isLight = root.getAttribute("data-theme") === "light";
+    if (isLight) {
+      root.removeAttribute("data-theme");
+      localStorage.setItem("vibe-theme", "dark");
+    } else {
+      root.setAttribute("data-theme", "light");
+      localStorage.setItem("vibe-theme", "light");
+    }
+  });
+})();
+
 const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   ? ""
   : "";
@@ -50,11 +79,22 @@ function formatDownloads(n) {
   return n.toString();
 }
 
+// Block dangerous URL protocols to prevent XSS
+function sanitizeUrl(url) {
+  if (!url) return "";
+  const trimmed = url.trim().toLowerCase();
+  if (trimmed.startsWith("javascript:") || trimmed.startsWith("data:") || trimmed.startsWith("vbscript:")) {
+    return "";
+  }
+  return url;
+}
+
 function createCard(item, type) {
   const stars = formatStars(item.stars);
-  const dl = formatDownloads(item.downloads);
-  const linkText = item.url.includes("npmjs.com") ? "npm" : "GitHub";
-  const linkIcon = item.url.includes("npmjs.com")
+  const dl = formatDownloads(item.weeklyDownloads || item.downloads);
+  const safeUrl = sanitizeUrl(item.url);
+  const linkText = safeUrl.includes("npmjs.com") ? "npm" : "GitHub";
+  const linkIcon = safeUrl.includes("npmjs.com")
     ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
     : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
 
@@ -62,10 +102,14 @@ function createCard(item, type) {
     ? `<span class="card-downloads" title="Weekly downloads">⬇ ${dl}</span>`
     : "";
 
+  const urlHtml = safeUrl
+    ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="card-link">${linkText} ${linkIcon}</a>`
+    : "";
+
   return `
     <div class="card" data-type="${type}" style="animation-delay: var(--card-delay, 0s)">
       <div class="card-header">
-        <span class="card-name">${escapeHtml(item.full_name)}</span>
+        <span class="card-name">${escapeHtml(item.full_name || "")}</span>
         <div class="card-stats">
           ${dlHtml}
           <span class="card-stars">⭐ ${stars}</span>
@@ -74,9 +118,7 @@ function createCard(item, type) {
       <p class="card-desc">${escapeHtml(item.description || "No description")}</p>
       <div class="card-footer">
         <span class="type-badge ${type}">${type.toUpperCase()}</span>
-        <a href="${item.url}" target="_blank" rel="noopener" class="card-link">
-          ${linkText} ${linkIcon}
-        </a>
+        ${urlHtml}
       </div>
     </div>
   `;
