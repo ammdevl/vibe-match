@@ -18,7 +18,7 @@ Describe what you want to build → VibeMatch uses AI to analyze your idea and s
 - **AI:** mimo-v2.5 via Vibe Proxy (OpenAI-compatible API)
 - **Search:** npm registry API (free, no key needed)
 - **Popularity:** GitHub stars (production) / npm popularity score (local dev)
-- **Styling:** CSS custom properties, dark mode, mobile-first
+- **Styling:** CSS custom properties, dark/light mode, skeleton loading, responsive
 
 ## Quick start
 
@@ -72,10 +72,11 @@ vibe-match/
 
 - **AI-powered analysis** — understands natural language project descriptions
 - **Real results** — searches npm for actual packages, not a static list
-- **Three tool types** — MCPs, Claude Code skills, and AI agents
-- **Ranked by popularity** — shows GitHub star counts with 1-hour caching
+- **Three tool types** — MCPs, Claude Code skills, and AI agents with tab filtering
+- **Ranked by popularity** — shows GitHub star counts and weekly npm downloads
+- **Skeleton loading** — smooth placeholder animations while searching
 - **Responsive** — works on mobile, tablet, and desktop
-- **Dark mode** — respects system preference
+- **Dark mode** — respects system preference, with light mode support
 - **Fast** — rate-limited to 10 req/min per IP
 
 ## Deploy to Vercel
