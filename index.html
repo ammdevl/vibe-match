@@ -22,8 +22,10 @@
         <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
       <h1 class="logo">
-        <span class="logo-icon">⚡</span>
-        <span class="logo-text">VibeMatch</span>
+        <a href="/" class="logo-link" aria-label="VibeMatch — go to home">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">VibeMatch</span>
+        </a>
       </h1>
       <p class="tagline">Describe your project. Get the right MCPs, skills & agents.</p>
     </header>
@@ -46,12 +48,12 @@
             aria-label="Project description"
           />
           <button type="button" class="search-clear" id="searchClear" hidden aria-label="Clear search">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
         </div>
         <button type="submit" class="search-btn" id="searchBtn" aria-label="Find tools">
           <span class="btn-text">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="m5 12 5 5L20 7"/>
             </svg>
             Find Tools
@@ -62,6 +64,215 @@
         </button>
       </div>
     </form>
+
+    <!-- Example Query Chips -->
+    <div class="example-queries" id="exampleQueries">
+      <button class="example-chip" data-query="Real-time chat app with AI moderation">💬 Real-time chat with AI</button>
+      <button class="example-chip" data-query="E-commerce platform with recommendation engine">🛒 E-commerce recommendations</button>
+      <button class="example-chip" data-query="DevOps dashboard with CI/CD monitoring">⚙️ DevOps CI/CD dashboard</button>
+      <button class="example-chip" data-query="AI-powered code review tool">🔍 AI code review</button>
+      <button class="example-chip" data-query="Social media scheduler with analytics">📊 Social media analytics</button>
+      <button class="example-chip" data-query="Fitness tracker with AI personal trainer">🏋️ AI fitness trainer</button>
+      <button class="example-chip" data-query="Music streaming app with smart playlists">🎵 Smart music playlists</button>
+      <button class="example-chip" data-query="Project management tool with AI task breakdown">📋 AI project manager</button>
+    </div>
+
+    <!-- About VibeMatch -->
+    <section class="about-section" id="aboutSection">
+      <div class="about-hero">
+        <p class="about-lead">
+          Stop digging through GitHub repos.<br>
+          <strong>Describe your project</strong> — we'll find the AI tools you need.
+        </p>
+        <div class="about-divider"></div>
+        <p class="about-detail">
+          VibeMatch analyzes your project idea and searches the npm registry for matching
+          <span class="about-highlight about-highlight--mcp">MCPs</span>,
+          <span class="about-highlight about-highlight--skill">Skills</span>, and
+          <span class="about-highlight about-highlight--agent">Agents</span>
+          — ranked by GitHub stars and popularity. No sign-up. No API keys. Just describe and discover.
+        </p>
+      </div>
+      <div class="about-flow">
+        <div class="about-flow-step">
+          <div class="about-flow-icon">✏️</div>
+          <div class="about-flow-label">Describe</div>
+          <div class="about-flow-sub">Tell us what you're building</div>
+        </div>
+        <div class="about-flow-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+        <div class="about-flow-step">
+          <div class="about-flow-icon">🧠</div>
+          <div class="about-flow-label">Analyze</div>
+          <div class="about-flow-sub">AI breaks down capabilities</div>
+        </div>
+        <div class="about-flow-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+        <div class="about-flow-step">
+          <div class="about-flow-icon">⚡</div>
+          <div class="about-flow-label">Discover</div>
+          <div class="about-flow-sub">Get matched tools, ranked</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tool Types Carousel -->
+    <section class="carousel-section" id="carouselSection">
+      <h2 class="carousel-title">What you'll find</h2>
+      <div class="carousel">
+        <button class="carousel-arrow carousel-arrow--prev" id="carouselPrev" aria-label="Previous">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="carousel-track-wrapper">
+          <div class="carousel-track" id="carouselTrack">
+            <!-- Slide 1: MCPs -->
+            <div class="carousel-slide">
+              <div class="carousel-slide-icon">🔌</div>
+              <h3 class="carousel-slide-title">MCPs <span class="carousel-slide-sub">Model Context Protocol</span></h3>
+              <p class="carousel-slide-desc">
+                MCPs are servers that connect your AI to the outside world. They let Claude read your local files, query databases, call APIs, browse the web, and interact with services like GitHub, Slack, or Jira — all through a standardized protocol. Without MCPs, your AI can only work with the text you paste in. With them, it becomes a fully capable assistant that can actually <em>do</em> things, not just talk about them.
+              </p>
+              <div class="carousel-slide-tags">
+                <span class="carousel-tag">File system access</span>
+                <span class="carousel-tag">Database queries</span>
+                <span class="carousel-tag">API integrations</span>
+                <span class="carousel-tag">Web browsing</span>
+                <span class="carousel-tag">Git operations</span>
+              </div>
+            </div>
+            <!-- Slide 2: Skills -->
+            <div class="carousel-slide">
+              <div class="carousel-slide-icon">🛠</div>
+              <h3 class="carousel-slide-title">Skills</h3>
+              <p class="carousel-slide-desc">
+                Skills are reusable prompt templates that teach Claude how to perform specific tasks consistently. They bundle instructions, best practices, and output formats into a single package — like a recipe the AI follows every time. A code-review skill knows how to analyze diffs, flag issues by severity, and suggest fixes in a structured format. Skills make your AI predictable and professional instead of improvising from scratch each time.
+              </p>
+              <div class="carousel-slide-tags">
+                <span class="carousel-tag">Code review</span>
+                <span class="carousel-tag">Writing docs</span>
+                <span class="carousel-tag">Debugging</span>
+                <span class="carousel-tag">Refactoring</span>
+                <span class="carousel-tag">Testing</span>
+              </div>
+            </div>
+            <!-- Slide 3: Agents -->
+            <div class="carousel-slide">
+              <div class="carousel-slide-icon">🤖</div>
+              <h3 class="carousel-slide-title">Agents</h3>
+              <p class="carousel-slide-desc">
+                Agents are autonomous AI programs that plan, reason, and execute multi-step tasks with minimal supervision. Unlike a single prompt-and-response, agents break goals into subtasks, use tools to gather information, handle errors, and iterate until the job is done. They can run tests, fix failures, refactor code, and verify the result — the difference between asking a question and hiring someone to do the work.
+              </p>
+              <div class="carousel-slide-tags">
+                <span class="carousel-tag">Task automation</span>
+                <span class="carousel-tag">Multi-step reasoning</span>
+                <span class="carousel-tag">Tool orchestration</span>
+                <span class="carousel-tag">Self-healing</span>
+                <span class="carousel-tag">Continuous iteration</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-arrow carousel-arrow--next" id="carouselNext" aria-label="Next">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="carousel-dots" id="carouselDots">
+        <button class="carousel-dot active" data-slide="0" aria-label="MCPs"></button>
+        <button class="carousel-dot" data-slide="1" aria-label="Skills"></button>
+        <button class="carousel-dot" data-slide="2" aria-label="Agents"></button>
+      </div>
+    </section>
+
+    <!-- Quick Find — Browse Directories -->
+    <section class="quick-find" id="quickFind">
+      <h2 class="quick-find-title">Browse manually</h2>
+      <div class="quick-find-grid">
+        <!-- MCPs -->
+        <div class="quick-find-card">
+          <div class="quick-find-card-header">
+            <span class="quick-find-icon">🔌</span>
+            <h3>MCPs</h3>
+          </div>
+          <p class="quick-find-desc">Servers that connect AI to external tools, data, and services.</p>
+          <div class="quick-find-links">
+            <a href="https://mcpmarket.com" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">MCP Market</span>
+              <span class="quick-link-sub">Curated MCP directory</span>
+            </a>
+            <a href="https://mcp.so" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">mcp.so</span>
+              <span class="quick-link-sub">Community MCP registry</span>
+            </a>
+            <a href="https://smithery.ai" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">Smithery</span>
+              <span class="quick-link-sub">MCP marketplace</span>
+            </a>
+            <a href="https://glama.ai/mcp/servers" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">Glama</span>
+              <span class="quick-link-sub">MCP server index</span>
+            </a>
+            <a href="https://github.com/topics/mcp" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">GitHub</span>
+              <span class="quick-link-sub">Open-source MCPs</span>
+            </a>
+          </div>
+        </div>
+        <!-- Skills -->
+        <div class="quick-find-card">
+          <div class="quick-find-card-header">
+            <span class="quick-find-icon">🛠</span>
+            <h3>Skills</h3>
+          </div>
+          <p class="quick-find-desc">Reusable prompt templates that teach AI specific workflows.</p>
+          <div class="quick-find-links">
+            <a href="https://github.com/topics/claude-skill" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">Claude Skills</span>
+              <span class="quick-link-sub">GitHub topic</span>
+            </a>
+            <a href="https://github.com/topics/skill" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">Skills Topic</span>
+              <span class="quick-link-sub">Broader skill repos</span>
+            </a>
+            <a href="https://www.npmjs.com/search?q=claude-skill" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">npm</span>
+              <span class="quick-link-sub">Skill packages</span>
+            </a>
+            <a href="https://github.com/topics/anthropic" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">Anthropic</span>
+              <span class="quick-link-sub">Official & community</span>
+            </a>
+          </div>
+        </div>
+        <!-- Agents -->
+        <div class="quick-find-card">
+          <div class="quick-find-card-header">
+            <span class="quick-find-icon">🤖</span>
+            <h3>Agents</h3>
+          </div>
+          <p class="quick-find-desc">Autonomous programs that plan, reason, and execute tasks.</p>
+          <div class="quick-find-links">
+            <a href="https://github.com/topics/ai-agent" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">AI Agents</span>
+              <span class="quick-link-sub">GitHub topic</span>
+            </a>
+            <a href="https://github.com/topics/agent" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">Agents Topic</span>
+              <span class="quick-link-sub">Broader agent repos</span>
+            </a>
+            <a href="https://www.npmjs.com/search?q=ai-agent" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">npm</span>
+              <span class="quick-link-sub">Agent packages</span>
+            </a>
+            <a href="https://github.com/topics/autonomous-agent" target="_blank" rel="noopener noreferrer" class="quick-link">
+              <span class="quick-link-name">Autonomous</span>
+              <span class="quick-link-sub">Self-directed agents</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Skeleton Loading -->
     <div id="skeletonLoading" class="skeleton-loading" hidden aria-hidden="true">
@@ -93,6 +304,9 @@
         </div>
         <div id="reasoningContent" class="reasoning-body"></div>
       </section>
+
+      <!-- Results Summary -->
+      <div id="resultsSummary" class="results-summary" hidden></div>
 
       <!-- Tab Navigation -->
       <nav id="resultTabs" class="result-tabs" hidden aria-label="Filter results by type">
@@ -142,6 +356,9 @@
   <button class="scroll-top" id="scrollTop" hidden aria-label="Scroll to top">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
   </button>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <script src="script.js"></script>
 </body>
