@@ -1,2 +1,30 @@
 node_modules/
+
+# Environment secrets — never commit
 .env
+.env.*
+!.env.example
+
+# Private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build / dist
+dist/
