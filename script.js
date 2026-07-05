@@ -291,36 +291,40 @@ cardsGrid.addEventListener("click", (e) => {
   }
 });
 
-// --- Card Tilt Effect ---
-cardsGrid.addEventListener("mousemove", (e) => {
-  const card = e.target.closest(".card-tilt");
-  if (!card) return;
-  const rect = card.getBoundingClientRect();
-  const x = (e.clientX - rect.left) / rect.width - 0.5;
-  const y = (e.clientY - rect.top) / rect.height - 0.5;
-  card.style.transform = `translateY(-3px) perspective(800px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg)`;
-});
+// --- Card Tilt Effect (desktop only) ---
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-cardsGrid.addEventListener("mouseenter", (e) => {
-  const card = e.target.closest(".card-tilt");
-  if (card) card.style.transition = "transform 0.1s ease-out, border-color var(--transition), box-shadow var(--transition)";
-}, true);
-
-// Reset tilt when mouse leaves a card or the grid
-cardsGrid.addEventListener("mouseleave", (e) => {
-  const card = e.target.closest(".card-tilt");
-  if (card) {
-    card.style.transition = "transform 0.4s ease-out, border-color var(--transition), box-shadow var(--transition)";
-    card.style.transform = "";
-  }
-}, true);
-
-cardsGrid.addEventListener("mouseleave", () => {
-  cardsGrid.querySelectorAll(".card-tilt").forEach((c) => {
-    c.style.transition = "transform 0.4s ease-out, border-color var(--transition), box-shadow var(--transition)";
-    c.style.transform = "";
+if (!isTouchDevice) {
+  cardsGrid.addEventListener("mousemove", (e) => {
+    const card = e.target.closest(".card-tilt");
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `translateY(-3px) perspective(800px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg)`;
   });
-});
+
+  cardsGrid.addEventListener("mouseenter", (e) => {
+    const card = e.target.closest(".card-tilt");
+    if (card) card.style.transition = "transform 0.1s ease-out, border-color var(--transition), box-shadow var(--transition)";
+  }, true);
+
+  // Reset tilt when mouse leaves a card or the grid
+  cardsGrid.addEventListener("mouseleave", (e) => {
+    const card = e.target.closest(".card-tilt");
+    if (card) {
+      card.style.transition = "transform 0.4s ease-out, border-color var(--transition), box-shadow var(--transition)";
+      card.style.transform = "";
+    }
+  }, true);
+
+  cardsGrid.addEventListener("mouseleave", () => {
+    cardsGrid.querySelectorAll(".card-tilt").forEach((c) => {
+      c.style.transition = "transform 0.4s ease-out, border-color var(--transition), box-shadow var(--transition)";
+      c.style.transform = "";
+    });
+  });
+}
 
 // --- Loading State ---
 function setLoading(loading) {
