@@ -153,6 +153,110 @@ exampleQueries.addEventListener("click", (e) => {
   doSearch(query);
 });
 
+// --- Search History (localStorage) ---
+const HISTORY_KEY = "vibe-search-history";
+const MAX_HISTORY = 10;
+const searchHistoryPanel = document.getElementById("searchHistory");
+
+function getSearchHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveSearchHistory(history) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY))); } catch {}
+}
+
+function addToHistory(query) {
+  const trimmed = query.trim();
+  if (!trimmed) return;
+  let history = getSearchHistory();
+  // Remove duplicate if exists
+  history = history.filter(h => h.query !== trimmed);
+  // Add to front
+  history.unshift({ query: trimmed, timestamp: Date.now() });
+  saveSearchHistory(history);
+  renderSearchHistory();
+}
+
+function removeFromHistory(query) {
+  let history = getSearchHistory();
+  history = history.filter(h => h.query !== query);
+  saveSearchHistory(history);
+  renderSearchHistory();
+  // Refocus input
+  input.focus();
+}
+
+function clearSearchHistory() {
+  saveSearchHistory([]);
+  renderSearchHistory();
+  input.focus();
+}
+
+function renderSearchHistory() {
+  if (!searchHistoryPanel) return;
+  const history = getSearchHistory();
+  searchHistoryPanel.hidden = history.length === 0;
+  if (history.length === 0) return;
+
+  searchHistoryPanel.innerHTML = `
+    <div class="history-header">
+      <span class="history-title">Recent searches</span>
+      <button class="history-clear-btn" id="historyClearBtn" aria-label="Clear all history">Clear</button>
+    </div>
+    <div class="history-list">
+      ${history.map(h => `
+        <div class="history-item" data-query="${escapeHtml(h.query)}">
+          <span class="history-query">${escapeHtml(h.query)}</span>
+          <button class="history-remove" data-query="${escapeHtml(h.query)}" aria-label="Remove">&times;</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  // Delegate events
+  const items = searchHistoryPanel.querySelectorAll(".history-item");
+  items.forEach(item => {
+    item.addEventListener("click", (e) => {
+      if (e.target.closest(".history-remove")) return;
+      const q = item.dataset.query;
+      if (q) { input.value = q; updateClearButton(); doSearch(q); }
+    });
+  });
+
+  const removes = searchHistoryPanel.querySelectorAll(".history-remove");
+  removes.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeFromHistory(btn.dataset.query);
+    });
+  });
+
+  const clearBtn = document.getElementById("historyClearBtn");
+  if (clearBtn) clearBtn.addEventListener("click", clearSearchHistory);
+}
+
+// Show/hide history on focus
+input.addEventListener("focus", () => {
+  const history = getSearchHistory();
+  if (history.length > 0) {
+    renderSearchHistory();
+    searchHistoryPanel.hidden = false;
+  }
+});
+
+// Close history when clicking outside
+document.addEventListener("click", (e) => {
+  if (searchHistoryPanel && !searchHistoryPanel.hidden) {
+    if (!e.target.closest("#searchForm") && !e.target.closest("#searchHistory")) {
+      searchHistoryPanel.hidden = true;
+    }
+  }
+});
+
 // --- Keyboard Shortcuts ---
 document.addEventListener("keydown", (e) => {
   // "/" to focus search (unless already in an input)
@@ -170,17 +274,19 @@ document.addEventListener("keydown", (e) => {
 // --- Helpers ---
 function formatStars(n) {
   if (n === null || n === undefined) return "—";
+  if (typeof n !== "number") return "—";
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
   if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
   if (n >= 1000) return `${(n / 1000).toFixed(2)}k`;
-  return n.toString();
+  return n <= 0 ? "—" : n.toString();
 }
 
 function formatDownloads(n) {
   if (n === null || n === undefined) return null;
+  if (typeof n !== "number") return null;
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return n.toString();
+  return n <= 0 ? null : n.toString();
 }
 
 // Block dangerous URL protocols to prevent XSS
@@ -242,31 +348,67 @@ function createCard(item, type) {
     ? `<span class="card-downloads" title="Weekly downloads">⬇ ${dl}</span>`
     : "";
 
+  // Detailed analytics: version, quality score, publisher, last updated
+  const versionHtml = item.version
+    ? `<span class="card-version" title="Version">📦 v${escapeHtml(item.version)}</span>`
+    : "";
+  const qualityHtml = item.quality
+    ? `<span class="card-quality" title="Quality score">📊 ${item.quality}%</span>`
+    : "";
+  const publisherHtml = item.publisher
+    ? `<span class="card-publisher" title="Publisher">👤 ${escapeHtml(item.publisher)}</span>`
+    : "";
+  const updatedHtml = item.updated_at
+    ? `<span class="card-updated" title="Last updated">🕐 ${new Date(item.updated_at).toLocaleDateString()}</span>`
+    : "";
+
+  // Topic tags
+  const topicHtml = (item.topics && item.topics.length > 0)
+    ? `<div class="card-tags">${item.topics.slice(0, 3).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join("")}</div>`
+    : "";
+
   const urlHtml = safeUrl
     ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="card-link">${linkText} ${linkIcon}</a>`
     : "";
 
-  const desc = escapeHtml(item.description || "No description");
+  const desc = escapeHtml(item.description || "No description available");
   const isLongDesc = (item.description || "").length > 120;
 
+  // Unique ID for comparison tracking
+  const itemId = `${type}-${item.name || item.full_name || Math.random().toString(36).slice(2)}`;
+
   return `
-    <div class="card card-tilt" data-type="${type}" style="animation-delay: var(--card-delay, 0s)">
+    <div class="card card-tilt" data-type="${type}" data-compare-id="${escapeHtml(itemId)}" style="animation-delay: var(--card-delay, 0s)">
       <div class="card-actions">
         ${safeUrl ? `<button class="card-action-btn" data-copy="${escapeHtml(safeUrl)}" title="Copy link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>` : ""}
+        <button class="card-compare-btn" title="Compare" aria-label="Add to comparison">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="m8 3-5 5"/><path d="M12 20L12 12"/><path d="m3 21 18-18"/></svg>
+        </button>
+      </div>
+      <div class="card-compare-check">
+        <input type="checkbox" class="compare-checkbox" id="cmp-${escapeHtml(itemId)}" aria-label="Compare ${escapeHtml(item.full_name || item.name)}" />
+        <label for="cmp-${escapeHtml(itemId)}" class="compare-label">compare</label>
       </div>
       <div class="card-header">
-        <span class="card-name">${escapeHtml(item.full_name || "")}</span>
+        <span class="card-name">${escapeHtml(item.full_name || item.name || "")}</span>
         <div class="card-stats">
           ${dlHtml}
           <span class="card-stars">⭐ ${stars}</span>
         </div>
       </div>
+      <div class="card-meta">
+        ${versionHtml}${qualityHtml}${publisherHtml}${updatedHtml}
+      </div>
       <div class="card-desc-wrapper">
         <p class="card-desc">${desc}</p>
         ${isLongDesc ? '<button class="card-desc-toggle">more</button>' : ""}
       </div>
+      ${topicHtml}
       <div class="card-footer">
-        <span class="type-badge ${type}">${type.toUpperCase()}</span>
+        <span class="card-footer-left">
+          <span class="type-badge ${type}">${type.toUpperCase()}</span>
+          ${item.registry ? `<span class="registry-badge registry-${item.registry}">${item.registry}</span>` : ""}
+        </span>
         ${urlHtml}
       </div>
     </div>
@@ -274,12 +416,129 @@ function createCard(item, type) {
 }
 
 // --- Card Interactions (delegate) ---
+
+// --- Comparison State ---
+const compareItems = new Map(); // id -> { item, type }
+
+function updateCompareBar() {
+  const bar = document.getElementById("compareBar");
+  const count = document.getElementById("compareCount");
+  const countNum = compareItems.size;
+  if (!bar || !count) return;
+  bar.hidden = countNum === 0;
+  count.textContent = countNum;
+  document.getElementById("compareBtn").disabled = countNum < 2;
+}
+
+function addToCompare(id, item, type) {
+  if (compareItems.size >= 4) {
+    showToast("Maximum 4 items for comparison", "error");
+    return false;
+  }
+  if (compareItems.has(id)) return true;
+  compareItems.set(id, { item, type });
+  updateCompareBar();
+  const cb = document.getElementById(`cmp-${CSS.escape(id)}`);
+  if (cb) cb.checked = true;
+  return true;
+}
+
+function removeFromCompare(id) {
+  compareItems.delete(id);
+  updateCompareBar();
+  const cb = document.getElementById(`cmp-${CSS.escape(id)}`);
+  if (cb) cb.checked = false;
+}
+
+function clearCompare() {
+  compareItems.forEach((_, id) => {
+    const cb = document.getElementById(`cmp-${CSS.escape(id)}`);
+    if (cb) cb.checked = false;
+  });
+  compareItems.clear();
+  updateCompareBar();
+}
+
+function openCompareModal() {
+  if (compareItems.size < 2) {
+    showToast("Select at least 2 items to compare", "error");
+    return;
+  }
+  const modal = document.getElementById("compareModal");
+  const body = document.getElementById("compareModalBody");
+  if (!modal || !body) return;
+
+  const entries = Array.from(compareItems.entries());
+  const rows = [
+    { label: "Name", extract: (e) => escapeHtml(e.item.full_name || e.item.name) },
+    { label: "Type", extract: (e) => `<span class="type-badge ${e.type}">${e.type.toUpperCase()}</span>` },
+    { label: "Stars", extract: (e) => formatStars(e.item.stars) },
+    { label: "Downloads", extract: (e) => formatDownloads(e.item.weeklyDownloads || e.item.downloads) || "—" },
+    { label: "Version", extract: (e) => e.item.version ? `v${escapeHtml(e.item.version)}` : "—" },
+    { label: "Quality", extract: (e) => e.item.quality ? `${e.item.quality}%` : "—" },
+    { label: "Popularity", extract: (e) => e.item.popularity ? `${e.item.popularity}%` : "—" },
+    { label: "Publisher", extract: (e) => escapeHtml(e.item.publisher || "—") },
+    { label: "Updated", extract: (e) => e.item.updated_at ? new Date(e.item.updated_at).toLocaleDateString() : "—" },
+    { label: "Description", extract: (e) => escapeHtml((e.item.description || "—").slice(0, 120)) },
+  ];
+
+  let html = `<table class="compare-table"><thead><tr><th>Metric</th>`;
+  entries.forEach(([id, e]) => {
+    html += `<th>${escapeHtml(e.item.full_name || e.item.name || id)}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+  rows.forEach((r) => {
+    html += `<tr><td class="compare-metric">${r.label}</td>`;
+    entries.forEach(([_, e]) => {
+      html += `<td>${r.extract(e)}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+
+  body.innerHTML = html;
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+// Delegate card interactions from the grid
 cardsGrid.addEventListener("click", (e) => {
   // Copy link
   const copyBtn = e.target.closest("[data-copy]");
   if (copyBtn) {
     e.preventDefault();
     copyToClipboard(copyBtn.dataset.copy);
+    return;
+  }
+  // Compare button (toggle)
+  const cmpBtn = e.target.closest(".card-compare-btn");
+  if (cmpBtn) {
+    e.preventDefault();
+    const card = cmpBtn.closest(".card");
+    if (!card) return;
+    const id = card.dataset.compareId;
+    if (!id) return;
+    if (compareItems.has(id)) {
+      removeFromCompare(id);
+    } else {
+      const found = allCards.find(c => `${c.type}-${c.item.name || c.item.full_name}` === id);
+      if (found) addToCompare(id, found.item, found.type);
+    }
+    return;
+  }
+  // Compare checkbox
+  const cb = e.target.closest(".compare-checkbox");
+  if (cb) {
+    const card = cb.closest(".card");
+    if (!card) return;
+    const id = card.dataset.compareId;
+    if (!id) return;
+    if (cb.checked) {
+      const found = allCards.find(c => `${c.type}-${c.item.name || c.item.full_name}` === id);
+      if (found) { if (!addToCompare(id, found.item, found.type)) cb.checked = false; }
+    } else {
+      removeFromCompare(id);
+    }
     return;
   }
   // Expand/collapse description
@@ -429,6 +688,9 @@ function showResults(data) {
   emptyState.hidden = true;
   errorState.hidden = true;
 
+  // Save to search history
+  addToHistory(lastQuery);
+
   // Show reasoning
   if (data.analysis && data.analysis.reasoning) {
     reasoning.hidden = false;
@@ -505,6 +767,75 @@ errorRetryBtn.addEventListener("click", () => {
   if (lastQuery) doSearch(lastQuery);
 });
 
+// --- Compare Bar & Modal Controls ---
+document.addEventListener("click", (e) => {
+  const viewBtn = e.target.closest("#compareBtn");
+  if (viewBtn) { openCompareModal(); return; }
+
+  const clearBtn = e.target.closest("#compareClearBtn");
+  if (clearBtn) { clearCompare(); return; }
+
+  const closeBtn = e.target.closest("#compareModalClose");
+  if (closeBtn) {
+    document.getElementById("compareModal").hidden = true;
+    document.body.classList.remove("modal-open");
+    return;
+  }
+
+  // Click outside modal
+  const overlay = e.target.closest("#compareModal");
+  if (overlay && !e.target.closest(".compare-modal")) {
+    document.getElementById("compareModal").hidden = true;
+    document.body.classList.remove("modal-open");
+  }
+});
+
+// Escape closes modal
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const modal = document.getElementById("compareModal");
+    if (modal && !modal.hidden) {
+      modal.hidden = true;
+      document.body.classList.remove("modal-open");
+    }
+  }
+});
+
+// --- Compare Bar & Modal ---
+document.addEventListener("click", (e) => {
+  const openBtn = e.target.closest("#compareBtn");
+  if (openBtn) { openCompareModal(); return; }
+
+  const clearBtn = e.target.closest("#compareClearBtn");
+  if (clearBtn) { clearCompare(); return; }
+
+  const closeModal = e.target.closest("#compareModalClose");
+  if (closeModal) {
+    document.getElementById("compareModal").hidden = true;
+    document.body.classList.remove("modal-open");
+    return;
+  }
+
+  // Click outside modal content
+  const overlay = e.target.closest("#compareModal");
+  if (overlay && !e.target.closest(".compare-modal")) {
+    document.getElementById("compareModal").hidden = true;
+    document.body.classList.remove("modal-open");
+    return;
+  }
+});
+
+// Escape key closes modal
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const modal = document.getElementById("compareModal");
+    if (modal && !modal.hidden) {
+      modal.hidden = true;
+      document.body.classList.remove("modal-open");
+    }
+  }
+});
+
 // --- Search ---
 async function doSearch(query) {
   setLoading(true);
@@ -515,9 +846,16 @@ async function doSearch(query) {
   resultTabs.hidden = true;
   resultsSummary.hidden = true;
   lastQuery = query;
+  clearCompare();
+  // Clear comparison state from previous search
+  compareItems.clear();
+  updateCompareBar();
 
   try {
-    const url = `${API_BASE}/api/search?q=${encodeURIComponent(query)}`;
+    // Read selected registry
+    const regRadio = document.querySelector('input[name="registry"]:checked');
+    const registry = regRadio ? regRadio.value : "npm";
+    const url = `${API_BASE}/api/search?q=${encodeURIComponent(query)}&registry=${registry}`;
     const res = await fetch(url);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
@@ -692,6 +1030,7 @@ window.addEventListener("pageshow", () => {
   if (quickFind) quickFind.classList.remove("hidden");
   if (aboutSection) aboutSection.classList.remove("hidden");
   if (carouselSection) carouselSection.classList.remove("hidden");
+  if (searchHistoryPanel) searchHistoryPanel.hidden = true;
   allCards = [];
   activeTab = "all";
   cardsGrid.innerHTML = "";

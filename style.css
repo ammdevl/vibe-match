@@ -217,7 +217,7 @@ body {
 
 .search-icon {
   position: absolute;
-  left: 1.1rem;
+  left: 5.2rem;
   color: var(--text-muted);
   pointer-events: none;
   transition: color 0.3s ease, transform 0.3s ease;
@@ -229,9 +229,57 @@ body {
   transform: scale(1.1);
 }
 
+/* Registry toggle */
+.search-registry-toggle {
+  position: absolute;
+  left: 0.75rem;
+  display: flex;
+  gap: 0.15rem;
+  z-index: 2;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 0.15rem;
+  border: 1px solid var(--border);
+}
+
+.registry-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.registry-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  user-select: none;
+}
+
+.registry-radio:checked + .registry-label {
+  background: var(--accent);
+  color: #fff;
+}
+
+.registry-label:hover {
+  color: var(--text-dim);
+}
+
+.registry-radio:focus-visible + .registry-label {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .search-input {
   width: 100%;
-  padding: 1rem 1.2rem 1rem 2.9rem;
+  padding: 1rem 1.2rem 1rem 6rem;
   font-size: 1.02rem;
   background: var(--surface);
   border: 2px solid var(--border);
@@ -628,13 +676,6 @@ body {
   flex-wrap: wrap;
 }
 
-.card-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-}
-
 .card-stars {
   font-size: 0.82rem;
   color: var(--star);
@@ -651,6 +692,59 @@ body {
   display: flex;
   align-items: center;
   gap: 0.2rem;
+}
+
+/* --- Card Analytics Meta Bar --- */
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.card-version,
+.card-quality,
+.card-publisher,
+.card-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+/* --- Card Topic Tags --- */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.7rem;
+}
+
+.card-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 540px) {
+  .card-meta {
+    font-size: 0.7rem;
+    gap: 0.25rem 0.5rem;
+  }
+  .card-tag {
+    font-size: 0.63rem;
+    padding: 0.1rem 0.35rem;
+  }
 }
 
 .card-desc {
@@ -672,6 +766,13 @@ body {
   flex-wrap: wrap;
 }
 
+.card-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
 .type-badge {
   font-size: 0.72rem;
   font-weight: 700;
@@ -684,6 +785,23 @@ body {
 .type-badge.mcp  { background: var(--mcp-bg);  color: var(--mcp); }
 .type-badge.skill { background: var(--skill-bg); color: var(--skill); }
 .type-badge.agent { background: var(--agent-bg); color: var(--agent); }
+
+.registry-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.registry-badge.registry-npm {
+  background: rgba(203,56,55,0.12);
+  color: #cb3837;
+}
+.registry-badge.registry-pypi {
+  background: rgba(53,114,165,0.12);
+  color: #3572a5;
+}
 
 .card-link {
   font-size: 0.75rem;
@@ -862,9 +980,10 @@ body {
     flex-direction: column;
   }
   .search-input {
-    padding: 0.85rem 1rem 0.85rem 2.75rem;
+    padding: 0.85rem 1rem 0.85rem 5.5rem;
     min-height: 48px;
   }
+  .search-icon { left: 5rem; }
   .search-btn {
     width: 100%;
     justify-content: center;
@@ -1445,6 +1564,104 @@ body {
   to { opacity: 0; transform: translateY(-8px) scale(0.95); }
 }
 
+/* --- Search History --- */
+.search-history {
+  max-width: 720px;
+  margin: -0.75rem auto 1rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+.search-history.hidden { display: none; }
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.history-clear-btn {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.history-clear-btn:hover {
+  color: #ef4444;
+  background: rgba(239,68,68,0.1);
+}
+
+.history-list {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  gap: 0.5rem;
+}
+
+.history-item:hover {
+  background: var(--accent-subtle);
+}
+
+.history-query {
+  font-size: 0.85rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.history-remove {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.history-remove:hover {
+  color: #ef4444;
+  background: rgba(239,68,68,0.1);
+}
+
+@media (max-width: 540px) {
+  .history-item { padding: 0.4rem 0.7rem; }
+  .history-query { font-size: 0.78rem; }
+  .history-header { padding: 0.4rem 0.7rem; }
+  .history-title { font-size: 0.68rem; }
+}
+
 /* --- Example Query Chips --- */
 .example-queries {
   max-width: 720px;
@@ -1603,7 +1820,356 @@ body {
   outline-offset: 2px;
 }
 
-input:focus-visible,
-button:focus-visible {
-  outline-offset: 0;
+/* --- Very small screens (< 400px) --- */
+@media (max-width: 400px) {
+  .container { padding: 0.75rem 0.5rem; }
+  .logo { font-size: 1.5rem; }
+  .logo-icon { font-size: 1.4rem; }
+  .tagline { font-size: 0.82rem; margin-top: 0.3rem; }
+  .theme-toggle { top: 0.5rem; right: 0.5rem; width: 32px; height: 32px; }
+  .theme-toggle svg { width: 14px; height: 14px; }
+  .header { margin-bottom: 1.25rem; padding-top: 0.75rem; }
+
+  .search-input { padding: 0.7rem 0.85rem 0.7rem 2.4rem; font-size: 0.9rem; min-height: 44px; }
+  .search-btn { font-size: 0.85rem; min-height: 44px; padding: 0 1rem; }
+  .search-btn svg { width: 16px; height: 16px; }
+
+  .example-queries { gap: 0.35rem; margin: -0.5rem auto 1rem; }
+  .example-chip { font-size: 0.72rem; padding: 0.3rem 0.6rem; }
+
+  .about-lead { font-size: 1rem; }
+  .about-detail { font-size: 0.82rem; }
+  .about-flow-step { max-width: 100%; padding: 0.65rem 0.75rem; }
+  .about-flow-icon { font-size: 1.3rem; }
+
+  .carousel-slide { padding: 0.9rem; }
+  .carousel-slide-title { font-size: 0.95rem; }
+  .carousel-slide-desc { font-size: 0.78rem; }
+  .carousel-tag { font-size: 0.65rem; padding: 0.2rem 0.45rem; }
+
+  .quick-find-card { padding: 0.85rem; }
+  .quick-find-card-header h3 { font-size: 0.88rem; }
+  .quick-find-desc { font-size: 0.75rem; }
+  .quick-link { padding: 0.4rem 0.6rem; }
+  .quick-link-name { font-size: 0.75rem; }
+
+  .card { padding: 0.75rem; }
+  .card-header { flex-direction: column; gap: 0.3rem; }
+  .card-name { font-size: 0.82rem; word-break: break-all; }
+  .card-stats { font-size: 0.72rem; }
+  .card-meta { font-size: 0.65rem; gap: 0.2rem 0.35rem; flex-wrap: wrap; }
+  .card-desc { font-size: 0.78rem; }
+  .card-tags { gap: 0.2rem; }
+  .card-tag { font-size: 0.6rem; padding: 0.1rem 0.3rem; max-width: 90px; }
+  .card-actions { top: 0.4rem; right: 0.4rem; gap: 0.2rem; opacity: 0.8; }
+  .card-action-btn, .card-compare-btn { width: 24px; height: 24px; }
+  .card-action-btn svg, .card-compare-btn svg { width: 12px; height: 12px; }
+  .card-footer { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+
+  .result-tabs { gap: 0.25rem; }
+  .tab-btn { font-size: 0.7rem; padding: 0.25rem 0.5rem; min-height: 32px; }
+  .tab-count { font-size: 0.6rem; padding: 0.05rem 0.25rem; }
+
+  .reasoning { padding: 0.75rem; }
+  .reasoning h2 { font-size: 0.9rem; }
+  .reasoning p { font-size: 0.8rem; }
+
+  .results-summary { font-size: 0.78rem; flex-wrap: wrap; }
+
+  .scroll-top { bottom: 1rem; right: 0.75rem; width: 36px; height: 36px; }
+  .scroll-top svg { width: 16px; height: 16px; }
+
+  .toast-container { left: 0.5rem; right: 0.5rem; bottom: 1rem; }
+  .toast { font-size: 0.78rem; padding: 0.55rem 0.85rem; }
+
+  .footer { font-size: 0.75rem; padding: 1.25rem 0 0.75rem; }
+
+  .compare-bar-info { font-size: 0.75rem; }
+  .compare-bar-btn { font-size: 0.72rem; padding: 0.3rem 0.6rem; }
+  .compare-checkbox { width: 14px; height: 14px; }
+}
+
+/* --- Comparison Bar --- */
+.compare-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: var(--surface-elevated);
+  border-top: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeInUp 0.3s ease;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+}
+
+.compare-bar[hidden] { display: none; }
+
+.compare-bar-inner {
+  max-width: 1024px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.compare-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.compare-bar-info strong {
+  color: var(--accent);
+}
+
+.compare-bar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.compare-bar-btn {
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.compare-bar-btn--clear {
+  background: var(--surface);
+  color: var(--text-dim);
+}
+
+.compare-bar-btn--clear:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.compare-bar-btn--view {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.compare-bar-btn--view:hover {
+  background: var(--accent-hover);
+}
+
+.compare-bar-btn--view:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Compare Checkbox on Cards --- */
+.card-compare-check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.compare-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.compare-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.compare-checkbox:checked + .compare-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Compare button on card actions */
+.card-compare-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.card-compare-btn:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.card-compare-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* --- Compare Modal --- */
+.compare-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+  overflow-y: auto;
+}
+
+.compare-modal-overlay[hidden] {
+  display: none;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.compare-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-width: 900px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: fadeInUp 0.3s ease;
+}
+
+.compare-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-modal-header h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.compare-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.compare-modal-close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+.compare-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.compare-table th {
+  font-weight: 700;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-alt);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.compare-table th:first-child {
+  width: 130px;
+  min-width: 130px;
+}
+
+.compare-metric {
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.compare-table td {
+  color: var(--text);
+}
+
+.compare-table tr:hover td {
+  background: var(--accent-subtle);
+}
+
+@media (max-width: 640px) {
+  .compare-modal {
+    max-height: 90vh;
+    border-radius: var(--radius-sm);
+  }
+  .compare-modal-body {
+    padding: 0.75rem;
+  }
+  .compare-table {
+    font-size: 0.75rem;
+  }
+  .compare-table th,
+  .compare-table td {
+    padding: 0.45rem 0.5rem;
+  }
+  .compare-table th:first-child {
+    width: 80px;
+    min-width: 80px;
+  }
+  .compare-bar {
+    padding: 0.5rem 0.75rem;
+  }
+  .compare-bar-info {
+    font-size: 0.8rem;
+  }
+  .compare-bar-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+  }
 }

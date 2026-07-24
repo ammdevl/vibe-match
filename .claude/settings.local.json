@@ -1,11 +1,6 @@
 {
-  "mcpServers": {
-    "fetch": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-fetch"]
-    }
-  },
   "enabledMcpjsonServers": [
-    "fetch"
+    "context7",
+    "playwright"
   ]
 }

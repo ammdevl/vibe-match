@@ -38,7 +38,15 @@
             <circle cx="11" cy="11" r="8"/>
             <path d="m21 21-4.3-4.3"/>
           </svg>
-          <input
+          <div class="search-registry-toggle" role="radiogroup" aria-label="Package registry">
+          <input type="radio" name="registry" id="reg-npm" value="npm" checked class="registry-radio" />
+          <label for="reg-npm" class="registry-label">npm</label>
+          <input type="radio" name="registry" id="reg-pypi" value="pypi" class="registry-radio" />
+          <label for="reg-pypi" class="registry-label">PyPI</label>
+          <input type="radio" name="registry" id="reg-all" value="all" class="registry-radio" />
+          <label for="reg-all" class="registry-label">All</label>
+        </div>
+        <input
             type="text"
             id="searchInput"
             class="search-input"
@@ -64,6 +72,9 @@
         </button>
       </div>
     </form>
+
+    <!-- Search History -->
+    <div class="search-history" id="searchHistory" hidden aria-label="Search history"></div>
 
     <!-- Example Query Chips -->
     <div class="example-queries" id="exampleQueries">
@@ -346,6 +357,31 @@
         <button class="error-retry-btn" id="errorRetryBtn">Try Again</button>
       </div>
     </main>
+
+    <!-- Comparison Bar -->
+    <div id="compareBar" class="compare-bar" hidden>
+      <div class="compare-bar-inner">
+        <span class="compare-bar-info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="m8 3-5 5"/><path d="M12 20L12 12"/><path d="m3 21 18-18"/></svg>
+          <span><strong id="compareCount">0</strong> items selected</span>
+        </span>
+        <div class="compare-bar-actions">
+          <button class="compare-bar-btn compare-bar-btn--clear" id="compareClearBtn">Clear</button>
+          <button class="compare-bar-btn compare-bar-btn--view" id="compareBtn" disabled>Compare</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compare Modal -->
+    <div id="compareModal" class="compare-modal-overlay" hidden role="dialog" aria-modal="true" aria-label="Package comparison">
+      <div class="compare-modal">
+        <div class="compare-modal-header">
+          <h2>📊 Package Comparison</h2>
+          <button class="compare-modal-close" id="compareModalClose" aria-label="Close comparison">&times;</button>
+        </div>
+        <div class="compare-modal-body" id="compareModalBody"></div>
+      </div>
+    </div>
 
     <footer class="footer">
       <p>Built with ⚡ VibeMatch · <a href="https://github.com/ammdevl/vibe-match" target="_blank" rel="noopener">GitHub</a></p>

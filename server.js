@@ -76,10 +76,10 @@ function setCache(key, data) {
   cache.set(key, { data, ts: Date.now() });
 }
 
-// --- Rate limiter (10 req/min per IP) ---
+// --- Rate limiter (configurable via env vars, default 20 req/min per IP) ---
 const rateLimits = new Map();
-const RATE_WINDOW = 60 * 1000;
-const RATE_MAX = 10;
+const RATE_WINDOW = (parseInt(process.env.RATE_WINDOW_MS, 10) || 60) * 1000;
+const RATE_MAX = parseInt(process.env.RATE_MAX, 10) || 20;
 
 function checkRate(ip) {
   const now = Date.now();
@@ -224,26 +224,126 @@ async function searchNpm(query, topic) {
       const pkg = obj.package;
       const repoUrl = pkg.links?.repository || pkg.links?.homepage || "";
       // Extract GitHub owner/repo from URL
-      const ghMatch = repoUrl.match(/github\.com\/([\w.-]+\/[\w.-]+)/);
-      const fullName = ghMatch ? ghMatch[1] : `npm/${pkg.name}`;
+      const ghMatch = repoUrl.match(/github\.com\/([\w.-]+\/[\w.-]+?)(?:\/|$|\.git)/);
+      const fullName = ghMatch ? ghMatch[1].replace(/\.git$/, "") : `npm/${pkg.name}`;
 
       return {
         name: pkg.name,
+        version: pkg.version || "",
         full_name: fullName,
         description: pkg.description || "",
         url: ghMatch ? `https://github.com/${fullName}` : `https://www.npmjs.com/package/${pkg.name}`,
+        stars: 0,                      // filled by batch GitHub fetch below
         popularity: Math.round((obj.score?.detail?.popularity || 0) * 100),
+        quality: Math.round((obj.score?.detail?.quality || 0) * 100),
+        maintenance: Math.round((obj.score?.detail?.maintenance || 0) * 100),
+        score: Math.round((obj.score?.final || 0) * 100),
         weeklyDownloads: obj.package?.downloads || 0,
-        topics: [topic],
+        topics: obj.package?.keywords?.length ? obj.package.keywords.slice(0, 5) : [topic],
         updated_at: pkg.date || "",
         owner: fullName.split("/")[0],
+        publisher: pkg.publisher?.username || pkg.publisher?.name || "",
+        registry: "npm",
       };
     });
+
+    // Batch fetch GitHub stars for packages that have GitHub URLs
+    const gitHubToken = process.env.GITHUB_TOKEN || "";
+    const starPromises = repos.map(async (pkg) => {
+      // Only try if we have a GitHub full_name (not npm/ prefix) and a token
+      if (pkg.full_name.startsWith("npm/") || !gitHubToken || !pkg.full_name.includes("/")) return;
+      try {
+        const ghRes = await fetch(
+          `https://api.github.com/repos/${pkg.full_name}`,
+          { headers: { Authorization: `Bearer ${gitHubToken}`, "User-Agent": "VibeMatch/1.0", Accept: "application/vnd.github.v3+json" } }
+        );
+        if (ghRes.ok) {
+          const gh = await ghRes.json();
+          pkg.stars = gh.stargazers_count ?? 0;
+          pkg.description = pkg.description || gh.description || "";
+          pkg.topics = gh.topics?.length ? gh.topics.slice(0, 5) : pkg.topics;
+        }
+      } catch { /* GitHub fetch failed — fall through with stars=0 */ }
+    });
+
+    if (gitHubToken) {
+      // Fire all requests concurrently with a 5s timeout
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000));
+      await Promise.race([Promise.all(starPromises), timeout]).catch(() => {});
+    }
 
     console.log(`  → ${repos.length} packages found`);
     return repos;
   } catch (err) {
     console.error(`npm search error: ${err.message}`);
+    return [];
+  }
+}
+
+// --- Search via PyPI registry ---
+async function searchPyPI(query, topic) {
+  const searchTerms = `${query} ${topic}`.trim().toLowerCase();
+  console.log(`pypi search: ${searchTerms}`);
+
+  try {
+    // Fetch all packages from PyPI simple API (lightweight — names only)
+    const res = await fetch("https://pypi.org/simple/", {
+      headers: { "User-Agent": "VibeMatch/1.0", Accept: "application/vnd.pypi.simple.v1+json" },
+    });
+    if (!res.ok) { console.error(`pypi simple returned ${res.status}`); return []; }
+
+    const data = await res.json();
+    const terms = searchTerms.split(/\s+/).filter(Boolean);
+
+    // Score each project name by how many search terms it matches
+    const scored = (data.projects || [])
+      .map(p => {
+        const name = p.name.toLowerCase();
+        const matches = terms.filter(t => name.includes(t)).length;
+        return { name: p.name, score: matches / terms.length };
+      })
+      .filter(p => p.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+
+    if (scored.length === 0) return [];
+
+    // Fetch details for top-scoring projects
+    const detailPromises = scored.map(async (proj) => {
+      try {
+        const dRes = await fetch(`https://pypi.org/pypi/${encodeURIComponent(proj.name)}/json`, {
+          headers: { "User-Agent": "VibeMatch/1.0" },
+        });
+        if (!dRes.ok) return null;
+        const info = (await dRes.json()).info;
+        return {
+          name: proj.name,
+          version: info.version || "",
+          full_name: `pypi/${proj.name}`,
+          description: (info.summary || info.description || "").slice(0, 200),
+          url: `https://pypi.org/project/${proj.name}/`,
+          stars: 0,
+          popularity: 0,
+          quality: 0,
+          maintenance: 0,
+          score: Math.round(proj.score * 100),
+          weeklyDownloads: info.downloads?.last_month || 0,
+          topics: [topic, "python", "pypi"],
+          updated_at: info.last_serial ? String(info.last_serial) : "",
+          owner: info.author || info.maintainer || "pypi",
+          publisher: info.author || info.maintainer || "",
+          registry: "pypi",
+        };
+      } catch { return null; }
+    });
+
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000));
+    const results = await Promise.race([Promise.all(detailPromises), timeout]).catch(() => []);
+    const valid = (Array.isArray(results) ? results : []).filter(Boolean);
+    console.log(`  → ${valid.length} pypi packages found`);
+    return valid;
+  } catch (err) {
+    console.error(`pypi search error: ${err.message}`);
     return [];
   }
 }
@@ -270,62 +370,121 @@ app.get("/api/search", async (req, res) => {
     return res.status(500).json({ error: "Server misconfigured." });
   }
 
-  // Check cache
-  const cached = getCached(query);
+  // Determine registry: npm, pypi, or all (default npm)
+  const registry = (req.query.registry || "npm").toLowerCase();
+  if (!["npm", "pypi", "all"].includes(registry)) {
+    return res.status(400).json({ error: "Invalid registry. Use npm, pypi, or all." });
+  }
+
+  const cacheKey = `${registry}:${query}`;
+  const cached = getCached(cacheKey);
   if (cached) return res.json(cached);
 
   try {
-    // Step 1: AI analyzes the project idea
-    const rawAnalysis = await askAI(query);
-    const analysis = validateAnalysis(rawAnalysis);
+    // Step 1: AI analyzes the project idea (fallback to keyword extraction if AI is unavailable)
+    let analysis;
+    try {
+      const rawAnalysis = await askAI(query);
+      analysis = validateAnalysis(rawAnalysis);
+    } catch (aiErr) {
+      console.error("AI unavailable, using fallback keywords:", aiErr.message);
+      // Fallback: extract keywords from the user's query
+      const keywords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2).slice(0, 4).join(" ") || query;
+      analysis = {
+        capabilities: [],
+        mcp_queries: [keywords],
+        skill_queries: [keywords],
+        agent_queries: [keywords],
+        reasoning: { mcp: "AI unavailable — showing general results", skill: "", agent: "" },
+      };
+    }
     if (!analysis) throw new Error("AI returned invalid response");
 
     // Sanitize AI-generated queries: strip URLs, limit length, remove special chars
     const sanitizeAIQuery = (q) => q.replace(/https?:\/\/\S+/g, "").replace(/[<>"'\\{}[\]()]/g, "").slice(0, 80).trim();
-    analysis.mcp_queries = analysis.mcp_queries.map(sanitizeAIQuery).filter(Boolean);
-    analysis.skill_queries = analysis.skill_queries.map(sanitizeAIQuery).filter(Boolean);
-    analysis.agent_queries = analysis.agent_queries.map(sanitizeAIQuery).filter(Boolean);
+    analysis.mcp_queries = (analysis.mcp_queries || []).map(sanitizeAIQuery).filter(Boolean);
+    analysis.skill_queries = (analysis.skill_queries || []).map(sanitizeAIQuery).filter(Boolean);
+    analysis.agent_queries = (analysis.agent_queries || []).map(sanitizeAIQuery).filter(Boolean);
 
-    // Step 2: Search npm registry in parallel for each tool type (fail gracefully)
+    // If all queries are empty after sanitization, use the fallback
+    if (!analysis.mcp_queries.length && !analysis.skill_queries.length && !analysis.agent_queries.length) {
+      const fallback = query.slice(0, 60);
+      analysis.mcp_queries = [fallback];
+      analysis.skill_queries = [fallback];
+      analysis.agent_queries = [fallback];
+    }
+
+    // Step 2: Search selected registry(ies) in parallel for each tool type (fail gracefully)
     const safe = (fn) => fn.catch((e) => { console.error("Search failed:", e.message); return []; });
-    const mcpPromises = (analysis.mcp_queries || []).map((q) => safe(searchNpm(q, "mcp")));
-    const skillPromises = (analysis.skill_queries || []).map((q) => safe(searchNpm(q, "skill")));
-    const agentPromises = (analysis.agent_queries || []).map((q) => safe(searchNpm(q, "agent")));
 
-    const [mcpResults, skillResults, agentResults] = await Promise.all([
-      Promise.all(mcpPromises),
-      Promise.all(skillPromises),
-      Promise.all(agentPromises),
-    ]);
+    const doNpm = registry === "npm" || registry === "all";
+    const doPyPI = registry === "pypi" || registry === "all";
+
+    const searchTasks = [];
+    if (doNpm) {
+      searchTasks.push(
+        Promise.all([
+          Promise.all((analysis.mcp_queries || []).map((q) => safe(searchNpm(q, "mcp")))),
+          Promise.all((analysis.skill_queries || []).map((q) => safe(searchNpm(q, "skill")))),
+          Promise.all((analysis.agent_queries || []).map((q) => safe(searchNpm(q, "agent")))),
+        ]).then(([m, s, a]) => ({ mcps: m.flat(), skills: s.flat(), agents: a.flat() }))
+      );
+    }
+    if (doPyPI) {
+      searchTasks.push(
+        Promise.all([
+          Promise.all((analysis.mcp_queries || []).map((q) => safe(searchPyPI(q, "mcp")))),
+          Promise.all((analysis.skill_queries || []).map((q) => safe(searchPyPI(q, "skill")))),
+          Promise.all((analysis.agent_queries || []).map((q) => safe(searchPyPI(q, "agent")))),
+        ]).then(([m, s, a]) => ({ mcps: m.flat(), skills: s.flat(), agents: a.flat() }))
+      );
+    }
+
+    const allResults = await Promise.all(searchTasks);
+    // Merge results from all registries
+    const merged = allResults.reduce((acc, r) => {
+      acc.mcps.push(...r.mcps);
+      acc.skills.push(...r.skills);
+      acc.agents.push(...r.agents);
+      return acc;
+    }, { mcps: [], skills: [], agents: [] });
 
     // Flatten and deduplicate by full_name
     const dedupe = (arr) => {
       const seen = new Set();
       return arr
-        .flat()
         .filter((r) => {
+          if (!r || !r.full_name) return false;
           if (seen.has(r.full_name)) return false;
           seen.add(r.full_name);
           return true;
         })
-        .sort((a, b) => b.stars - a.stars)
+        .sort((a, b) => {
+          // Sort primarily by stars, fall back to popularity then score
+          const starDiff = (b.stars || 0) - (a.stars || 0);
+          if (starDiff !== 0) return starDiff;
+          const popDiff = (b.popularity || 0) - (a.popularity || 0);
+          if (popDiff !== 0) return popDiff;
+          return (b.score || 0) - (a.score || 0);
+        })
         .slice(0, 10);
     };
 
     const result = {
       query,
+      registry,
       analysis: {
         capabilities: analysis.capabilities || [],
         reasoning: analysis.reasoning || {},
       },
       results: {
-        mcps: dedupe(mcpResults),
-        skills: dedupe(skillResults),
-        agents: dedupe(agentResults),
+        mcps: dedupe(merged.mcps || []),
+        skills: dedupe(merged.skills || []),
+        agents: dedupe(merged.agents || []),
       },
     };
 
-    setCache(query, result);
+    setCache(cacheKey, result);
     res.json(result);
   } catch (err) {
     console.error("Search error:", err.message);
